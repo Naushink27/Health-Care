@@ -1,0 +1,20 @@
+{
+  "name": "health-care",
+  "version": "1.0.0",
+  "description": "Application for doctors and patients",
+  "homepage": "https://github.com/Naushink27/HealthCare#readme",
+  "bugs": {
+    "url": "https://github.com/Naushink27/HealthCare/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Naushink27/HealthCare.git"
+  },
+  "license": "ISC",
+  "author": "Naushin khan",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  }
+}
