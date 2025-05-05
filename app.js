@@ -2,7 +2,11 @@ require('dotenv').config();
 const express = require('express');
 const connectDB = require('./src/config/database');
 const app=express()
+app.use(express.json())
 
+const signupRouter=require('./src/routes/signup')
+
+app.use('/',signupRouter)
 
 connectDB().then(()=>{
     console.log("DB connected")
