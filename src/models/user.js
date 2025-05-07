@@ -33,7 +33,7 @@ const userSchema = new mongoose.Schema({
         type: String,
         enum: ['admin', 'patient', 'doctor'],
     },
-});
+},{withTimeStamps:true});
 
 userSchema.methods.validatePassword= async function(passwordInputByUser){
 const user= this;
@@ -52,5 +52,5 @@ userSchema.methods.getJWT= async function(){
 
 
 
-const User=mongoose.model('User',userSchema)
+const User = mongoose.models.User || mongoose.model('User', userSchema);
 module.exports=User

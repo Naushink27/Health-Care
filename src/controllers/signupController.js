@@ -1,5 +1,7 @@
 const signupValidation = require('../validations/signupValidation');
 const User = require('../models/User'); 
+const Patient = require('../models/Patient'); 
+const Doctor = require('../models/Doctor');
 const bcrypt = require('bcrypt');
 const signupUser = async (req, res) => {
     if(!req.body){
@@ -25,10 +27,27 @@ const signupUser = async (req, res) => {
             password: hashedPassword,
             role: req.body.userRole,
         })
+
         if (!user) {
             throw new Error("User not created")
         }
+        if(user.role=='patient'){
+            patient =await  new Patient({ userId: user._id });
+            if (!patient) {
+                throw new Error("Patient profile not created")
+            }
+            await patient.save();
+        }
+        if(user.role=='doctor'){
+            doctor =await  new Doctor({ userId: user._id });
+            if (!doctor) {
+                throw new Error("Doctor profile not created")
+            }
+            await doctor.save();
+        }
+
       await user.save()
+
         return res.status(201).json({ message: "User created successfully", user });
 
 
