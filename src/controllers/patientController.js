@@ -1,5 +1,6 @@
 const Patient = require('../models/Patient'); 
 const Doctor = require('../models/Doctor');
+const Appointment = require('../models/appointment');
 
 const updatePatientProfile = async (req, res) => {
   const patientId = req.params.patientId;
@@ -55,4 +56,53 @@ const getAllDoctors=async(req,res)=>{
   }
 }
 
-module.exports = { updatePatientProfile,getPatientProfile ,getAllDoctors };
+const bookAppointment=async(req,res)=>{
+  try{
+    const doctorId=req.params.doctorId;
+    console.log(doctorId)
+   console.log(req.body)
+
+    const {patientId,appointmentDate,appointmentTime,description}=req.body;
+    if(!doctorId || !patientId || !appointmentDate || !appointmentTime||!description){
+      return res.status(404).json({message:'Please Provide all required fields'})
+    }
+    const doctor=await Doctor.findById(doctorId);
+    if(!doctor){
+      return res.status(404).json({message:'Doctor not found'})
+    }
+    const patient=await Patient.findById(patientId);
+    if(!patient){
+      return res.status(404).json({message:'Patient not found'})
+    }
+     const appointment=await Appointment.create({
+      doctorId,
+      patientId,
+      appointmentDate,
+      appointmentTime,
+      description
+     })
+
+     await appointment.save();
+     res.status(200).json({message:'Appointment booked successfully',appointment})
+
+
+  }catch(error){
+    res.status(500).json({message:error.message})
+  }
+}
+
+const bookedAppointments=async(req,res)=>{
+  try{
+    const patientId=req.params.patientId
+    const appointments=await Appointment.find({patientId:patientId})
+    if(!appointments){
+      return res.status(404).json({message:'No appointments found'})
+    }
+    res.status(200).json({message:'Appointments fetched successfully',appointments})
+  }catch(error){
+    res.status(500).json({message:error.message})
+  }
+}
+
+
+module.exports = { updatePatientProfile,getPatientProfile ,getAllDoctors ,bookAppointment,bookedAppointments};

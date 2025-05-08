@@ -1,3 +1,4 @@
+const Appointment = require('../models/appointment');
 const Doctor=require('../models/doctor')
 const User=require('../models/User')
 
@@ -45,6 +46,44 @@ const getDoctorProfile=async(req,res)=>{
     }
 }
 
+const checkAppointments=async(req,res)=>{
+    try{
+       const doctorId=req.params.doctorId;
+       
+        const appointments=await Appointment.find({doctorId:doctorId});
+        if(appointments.length===0){
+            return res.status(404).json({message:'No appointments found'})
+        }
+        res.status(200).json({message:'Appointments fetched successfully',appointments})
 
 
-module.exports={updateDoctorProfile,getDoctorProfile}
+    }catch(err){
+        res.status(500).json({message:err.message})
+    }
+}
+
+const updateAppointmentStatus=async(req,res)=>{
+    const appointmentId=req.params.appointmentId;
+    const {status}=req.body;
+    if(!status){
+        return res.status(400).json({message:'Please provide status'})
+    }
+    if(status!=='confirmed' && status!=='cancelled'){
+        return res.status(400).json({message:'Invalid status'})
+    }
+    try{
+        const appointment=await Appointment.findById(appointmentId)
+        if(!appointment){
+            return res.status(404).json({message:'Appointment not found'})
+        }
+        appointment.status=status;
+        await appointment.save();
+        res.status(200).json({message:'Appointment status updated successfully',appointment})
+    }catch(err){
+        res.status(500).json({message:err.message})
+    }
+}
+
+
+
+module.exports={updateDoctorProfile,getDoctorProfile,checkAppointments,updateAppointmentStatus}

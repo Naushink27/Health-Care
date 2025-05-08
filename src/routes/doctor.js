@@ -4,5 +4,7 @@ const doctorRouter = express.Router();
 const {doctorAuth} = require('../middlewares/doctorAuth')
 doctorRouter.patch('/doctor/update/profile/:doctorId',doctorAuth, doctorController.updateDoctorProfile);
 doctorRouter.get('/doctor/get/profile/:doctorId',doctorAuth, doctorController.getDoctorProfile);
+doctorRouter.get('/doctor/check/appointments/:doctorId',doctorAuth, doctorController.checkAppointments);
+doctorRouter.patch('/doctor/update/appointment/:appointmentId',doctorAuth, doctorController.updateAppointmentStatus);
 
 module.exports = doctorRouter;

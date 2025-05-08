@@ -4,6 +4,7 @@ const signupRouter=require('./src/routes/signup')
 const loginRouter=require('./src/routes/login')
 const patientRouter=require('./src/routes/patient')
 const doctorRouter=require('./src/routes/doctor')
+const adminRouter=require('./src/routes/admin')
 const connectDB = require('./src/config/database');
 const cookieParser=require("cookie-parser");
 const app=express()
@@ -16,6 +17,7 @@ app.use('/',signupRouter)
 app.use('/',loginRouter)
 app.use('/',patientRouter)
 app.use('/',doctorRouter)
+app.use('/',adminRouter)
 
 connectDB().then(()=>{
     console.log("DB connected")
