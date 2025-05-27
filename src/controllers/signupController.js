@@ -32,14 +32,14 @@ const signupUser = async (req, res) => {
             throw new Error("User not created")
         }
         if(user.role=='patient'){
-            patient =await  new Patient({ userId: user._id });
+          const  patient =await  new Patient({ userId: user._id });
             if (!patient) {
                 throw new Error("Patient profile not created")
             }
             await patient.save();
         }
         if(user.role=='doctor'){
-            doctor =await  new Doctor({ userId: user._id });
+           const doctor =await  new Doctor({ userId: user._id });
             if (!doctor) {
                 throw new Error("Doctor profile not created")
             }
