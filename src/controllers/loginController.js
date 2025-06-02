@@ -36,5 +36,15 @@ const loginUser = async (req, res) => {
     }
 };
 
+const logoutUser=async(req,res)=>{
+    try {
+        res.clearCookie('jwt');
+        res.status(200).json({ message: 'Logout successful' });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+}
 
-module.exports = { loginUser }
+
+module.exports = { loginUser,logoutUser };
