@@ -10,7 +10,7 @@ const updateDoctorProfile = async (req, res) => {
   try {
     const doctorId = req.params.doctorId;
     const { age, specialization, experience, qualification, contactNumber, address, about, profilePicture, hospitalName } = req.body;
-
+    
     if (!isValidObjectId(doctorId)) {
       return res.status(400).json({ message: 'Invalid doctor ID' });
     }
@@ -33,8 +33,11 @@ const updateDoctorProfile = async (req, res) => {
     }
 
     let doctor = await Doctor.findOne({ userId: doctorId });
-    const user = await User.findById(doctorId);
 
+    const user = await User.findById(doctorId);
+  user.profilePicture=profilePicture
+  await user.save()
+     console.log(user);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }

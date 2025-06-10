@@ -29,6 +29,10 @@ const userSchema = new mongoose.Schema({
     gender: {
         type: String,
     },
+    profilePicture:{
+        type:String,
+        default:'https://www.w3schools.com/howto/img_avatar.png'
+    },
     role: {
         type: String,
         enum: ['admin', 'patient', 'doctor'],
