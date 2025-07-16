@@ -13,6 +13,7 @@ const patientSchema=new mongoose.Schema({
     gender:{
         type:String,
         enum:['Male','Female','Other'],
+        required:false
 
     },
     ContactNumber:{
@@ -28,6 +29,9 @@ const patientSchema=new mongoose.Schema({
     address:{
         type:String,
     },
+    reports:{
+        type:[String],
+    }
 
 
 },{timestamps:true});

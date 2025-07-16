@@ -4,17 +4,23 @@ const Appointment = require('../models/appointment');
 
 const updatePatientProfile = async (req, res) => {
   const patientId = req.params.patientId;
-  const { age, gender, ContactNumber, bloodGroup, MedicalHistory, address } = req.body;
-
+  const {
+    age,
+    gender,
+    ContactNumber,
+    bloodGroup,
+    MedicalHistory,
+    address,
+    profilePicture // ✅ Include this
+  } = req.body;
 
   try {
     // ✅ Check if patient profile exists
     let patient = await Patient.findOne({ userId: patientId });
 
     if (!patient) {
-      // 🔧 Create profile if not exists
       res.status(404).json({ message: 'Patient profile not found' });
-    return;
+      return;
     }
 
     // ✅ Update fields
@@ -24,7 +30,9 @@ const updatePatientProfile = async (req, res) => {
     patient.bloodGroup = bloodGroup;
     patient.MedicalHistory = MedicalHistory;
     patient.address = address;
+    patient.profilePicture = profilePicture || patient.profilePicture; // ✅ Conditionally update profilePicture
 
+  
     await patient.save();
 
     res.status(200).json({ message: 'Profile updated successfully', patient });
@@ -32,10 +40,11 @@ const updatePatientProfile = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
 const getPatientProfile=async(req,res)=>{
     try{
         const patientId=req.params.patientId;
-        const patient=await Patient.findOne({userId:patientId});
+        const patient=await Patient.findOne({userId:patientId}).populate('userId', 'firstName lastName email');;
         if(!patient){
             return res.status(404).json({message:'Patient profile not found'})
         }
