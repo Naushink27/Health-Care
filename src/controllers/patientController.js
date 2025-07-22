@@ -161,16 +161,21 @@ const bookAppointment = async (req, res) => {
 const bookedAppointments = async (req, res) => {
   try {
     const patientId = req.params.patientId;
+    const patient= await Patient.find({ userId: patientId });
+    if (!patient) {
+      return res.status(404).json({ message: 'patient not found' });
+    }
     if (!isValidObjectId(patientId)) {
       return res.status(400).json({ message: 'Invalid patient ID' });
     }
-
-    const appointments = await Appointment.find({ patientId })
+const actualId=patient[0].id;
+    const appointments = await Appointment.find({ patientId: actualId })
       .populate('doctorId', 'firstName lastName profilePicture')
       .populate('patientId', 'firstName lastName');
     if (!appointments || appointments.length === 0) {
       return res.status(404).json({ message: 'No appointments found' });
     }
+    
     res.status(200).json({ message: 'Appointments fetched successfully', appointments });
   } catch (error) {
     res.status(500).json({ message: error.message || 'Failed to fetch appointments' });
