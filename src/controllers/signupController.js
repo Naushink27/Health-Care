@@ -1,61 +1,81 @@
 const signupValidation = require('../validations/signupValidation');
-const User = require('../models/User'); 
-const Patient = require('../models/Patient'); 
+const User = require('../models/User');
+const Patient = require('../models/Patient');
 const Doctor = require('../models/Doctor');
 const bcrypt = require('bcrypt');
+
 const signupUser = async (req, res) => {
-    if(!req.body){
-        res.status(400).json({ message: "Request body is required" });
+    // Check if request body is provided
+    if (!req.body) {
+        return res.status(400).json({ status: 'error', message: 'Request body is required' });
     }
+
+    // Validate request body
     const { errors, isValid } = signupValidation(req.body);
     if (!isValid) {
-        return res.status(400).json({ errors });
-      
+        return res.status(400).json({ status: 'error', errors });
     }
+
     try {
-        const {email, password } = req.body;
+        const { email, password, firstName, lastName, userRole } = req.body;
+
+        // Check if email is already in use
         const existingUser = await User.findOne({ email });
         if (existingUser) {
-            return res.status(400).json({ message: "Email is already in use" });
+            return res.status(400).json({ status: 'error', message: 'Email is already in use' });
         }
-        const hashedPassword = await bcrypt.hash(password, 10);
 
-        const user = await new User({
-            firstName: req.body.firstName,
-            lastName: req.body.lastName,
-            email: req.body.email,
-            password: hashedPassword,
-            role: req.body.userRole,
-        })
+        // Hash password
+        const hashedPassword = await bcrypt.hash(password, parseInt(process.env.BCRYPT_SALT_ROUNDS) || 10);
 
-        if (!user) {
-            throw new Error("User not created")
-        }
-        if(user.role=='patient'){
-          const  patient =await  new Patient({ userId: user._id });
-            if (!patient) {
-                throw new Error("Patient profile not created")
+        // Start MongoDB transaction
+        const session = await User.startSession();
+        session.startTransaction();
+
+        try {
+            // Create and save User
+            const user = new User({
+                firstName,
+                lastName,
+                email,
+                password: hashedPassword,
+                role: userRole,
+            });
+            await user.save({ session });
+
+            // Create Patient or Doctor based on role
+            if (userRole === 'patient') {
+                const patient = new Patient({
+                    userId: user._id,
+                    firstName,
+                    lastName,
+                });
+                await patient.save({ session });
+            } else if (userRole === 'doctor') {
+                const doctor = new Doctor({
+                    userId: user._id,
+                    firstName,
+                    lastName,
+                });
+                await doctor.save({ session });
+            } else {
+                throw new Error('Invalid user role');
             }
-            await patient.save();
+
+            // Commit transaction
+            await session.commitTransaction();
+            return res.status(201).json({ status: 'success', message: 'User created successfully', user });
+        } catch (err) {
+            // Abort transaction on error
+            await session.abortTransaction();
+            throw err;
+        } finally {
+            session.endSession();
         }
-        if(user.role=='doctor'){
-           const doctor =await  new Doctor({ userId: user._id });
-            if (!doctor) {
-                throw new Error("Doctor profile not created")
-            }
-            await doctor.save();
-        }
-
-      await user.save()
-
-        return res.status(201).json({ message: "User created successfully", user });
-
-
     } catch (err) {
-       
-        console.error(err);
-        return res.status(500).json({ message: "Internal server error" });
+        console.error('Error during signup:', err.message);
+        return res.status(500).json({ status: 'error', message: 'Internal server error' });
     }
-}
+};
 
 module.exports = { signupUser };

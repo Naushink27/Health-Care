@@ -1,31 +1,12 @@
 const mongoose = require('mongoose');
 const appointmentSchema=new mongoose.Schema({
    
-    doctorId:{
-        type:String,
-        required:true,
-    },
-    patientId:{
-        type:String,
-        required:true,
-    },
-    appointmentDate:{
-        type:Date,
-        required:true,
-    },
-    appointmentTime:{
-        type:String,
-        required:true,
-    },
-    status:{
-        type:String,
-        enum:['pending','confirmed','cancelled'],
-        default:'pending',
-    },
-    description:{
-        type:String,
-        required:true,
-    },
+   patientId: { type: mongoose.Schema.Types.ObjectId, ref: 'Patient', required: true },
+  doctorId: { type: mongoose.Schema.Types.ObjectId, ref: 'Doctor', required: true },
+  date: { type: Date, required: true },
+  status: { type: String, default: 'pending', enum: ['pending', 'confirmed', 'rejected'] },
+  isVideoCall: { type: Boolean, default: false },
+  description: { type: String, required: true },
 },{timestamps:true});
 
 const Appointment=mongoose.models.Appointment||mongoose.model('Appointment',appointmentSchema);

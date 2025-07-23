@@ -3,6 +3,7 @@ const Doctor = require('../models/Doctor');
 const Appointment = require('../models/appointment');
 const User = require('../models/User');
 const mongoose = require('mongoose');
+const Feedback = require('../models/feedback');
 
 // Validate MongoDB ObjectId
 const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
@@ -75,21 +76,20 @@ const updatePatientProfile = async (req, res) => {
   }
 };
 
-
 const getPatientProfile = async (req, res) => {
   try {
     const patientId = req.params.patientId;
     if (!isValidObjectId(patientId)) {
       return res.status(400).json({ message: 'Invalid patient ID' });
     }
-
     // Populate userId to get firstName, lastName, and email from User
-    let patient = await Patient.findOne({ userId: patientId }).populate('userId', 'firstName lastName email');
+    let patient = await Patient.findById(patientId).populate('userId', 'firstName lastName email');
     if (!patient) {
       const user = await User.findById(patientId);
       if (!user) {
         return res.status(404).json({ message: 'User not found' });
       }
+      
       // Create a default patient profile if none exists
       patient = new Patient({
         userId: patientId,
@@ -131,11 +131,11 @@ const bookAppointment = async (req, res) => {
       return res.status(400).json({ message: 'Please provide all required fields' });
     }
 
-    const doctor = await User.findById(doctorId);
+    const doctor = await Doctor.findOne({userId:doctorId});
     if (!doctor) {
       return res.status(404).json({ message: 'Doctor not found' });
     }
-
+      console.log(doctor);
     // Find the patient document using userId and get its _id
     const patient = await Patient.findOne({ userId });
     if (!patient) {
@@ -143,7 +143,7 @@ const bookAppointment = async (req, res) => {
     }
 
     const appointment = new Appointment({
-      doctorId, // _id from Doctor model
+      doctorId:doctor._id, // _id from Doctor model
       patientId: patient._id, // _id from Patient model
       appointmentDate,
       appointmentTime,
@@ -161,14 +161,15 @@ const bookAppointment = async (req, res) => {
 const bookedAppointments = async (req, res) => {
   try {
     const patientId = req.params.patientId;
-    const patient= await Patient.find({ userId: patientId });
+    const patient = await Patient.findOne({ userId: patientId }); // Changed from find() to findOne()
     if (!patient) {
-      return res.status(404).json({ message: 'patient not found' });
+      return res.status(404).json({ message: 'Patient not found' });
     }
     if (!isValidObjectId(patientId)) {
       return res.status(400).json({ message: 'Invalid patient ID' });
     }
-const actualId=patient[0].id;
+    const actualId = patient._id; // Use patient._id directly
+
     const appointments = await Appointment.find({ patientId: actualId })
       .populate('doctorId', 'firstName lastName profilePicture')
       .populate('patientId', 'firstName lastName');
@@ -205,4 +206,40 @@ const cancelAppointment = async (req, res) => {
     res.status(500).json({ message: err.message || 'Failed to cancel appointment' });
   }
 };
-module.exports = { updatePatientProfile, getPatientProfile, getAllDoctors, bookAppointment, bookedAppointments };
+
+const submitFeedback = async (req, res) => {
+  try {
+    const { doctorId, patientId, rating, comments } = req.body;
+
+    // Validate input
+    if (!doctorId || !patientId || !rating || !comments) {
+      return res.status(400).json({ message: 'All fields are required' });
+    }
+    if (!mongoose.isValidObjectId(doctorId) || !mongoose.isValidObjectId(patientId)) {
+      return res.status(400).json({ message: 'Invalid doctor or patient ID' });
+    }
+    if (rating < 1 || rating > 5) {
+      return res.status(400).json({ message: 'Rating must be between 1 and 5' });
+    }
+
+    // Optional: Verify authenticated user is the patient
+    // if (req.user._id.toString() !== patientId) {
+    //   return res.status(403).json({ message: 'Unauthorized to submit feedback' });
+    // }
+
+    // Save feedback
+    const feedback = new Feedback({
+      doctorId,
+      patientId,
+      rating,
+      comments,
+    });
+    await feedback.save();
+
+    res.status(201).json({ message: 'Feedback submitted successfully', feedback });
+  } catch (error) {
+    console.error('Error submitting feedback:', error);
+    res.status(500).json({ message: error.message || 'Failed to submit feedback' });
+  }
+}
+module.exports = { updatePatientProfile, getPatientProfile, getAllDoctors, bookAppointment, bookedAppointments ,submitFeedback};

@@ -125,7 +125,7 @@ const checkAppointments = async (req, res) => {
     if (!doctor) {
       return res.status(404).json({ message: 'Doctor not found' });
     }
-
+console.log(doctor._id);
     const appointments = await Appointment.find({ doctorId: doctor._id });
     if (appointments.length === 0) {
       return res.status(404).json({ message: 'No appointments found' });
