@@ -1,5 +1,5 @@
-const Patient = require('../models/Patient');
-const Doctor = require('../models/Doctor');
+const Patient = require('../models/patient');
+const Doctor = require('../models/doctor');
 const Appointment = require('../models/appointment');
 const User = require('../models/User');
 const mongoose = require('mongoose');
@@ -160,25 +160,42 @@ const bookAppointment = async (req, res) => {
 
 const bookedAppointments = async (req, res) => {
   try {
+    console.log("🔥 bookedAppointments API HIT 🔥");
+
     const patientId = req.params.patientId;
-    const patient = await Patient.findOne({ userId: patientId }); // Changed from find() to findOne()
-    if (!patient) {
-      return res.status(404).json({ message: 'Patient not found' });
-    }
+    console.log("🧾 Param patientId:", patientId);
+
     if (!isValidObjectId(patientId)) {
+      console.log("❌ Invalid patientId");
       return res.status(400).json({ message: 'Invalid patient ID' });
     }
-    const actualId = patient._id; // Use patient._id directly
 
-    const appointments = await Appointment.find({ patientId: actualId })
+    const patient = await Patient.findOne({ userId: patientId });
+    console.log("👤 Found patient:", patient);
+
+    if (!patient) {
+      console.log("❌ No patient found with this userId");
+      return res.status(404).json({ message: 'Patient not found' });
+    }
+
+    const actualId = patient._id;
+    console.log("🔍 Patient's _id to search appointment:", actualId);
+
+    const appointments = await Appointment.find({ patientId: actualId})
       .populate('doctorId', 'firstName lastName profilePicture')
       .populate('patientId', 'firstName lastName');
+    
+    console.log("📅 Found appointments:", appointments);
+
     if (!appointments || appointments.length === 0) {
+      console.log("⚠️ No appointments found in DB");
       return res.status(404).json({ message: 'No appointments found' });
     }
-    
+
     res.status(200).json({ message: 'Appointments fetched successfully', appointments });
+
   } catch (error) {
+    console.log("🔥 Error occurred:", error);
     res.status(500).json({ message: error.message || 'Failed to fetch appointments' });
   }
 };
