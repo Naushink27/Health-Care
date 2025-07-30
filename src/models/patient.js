@@ -37,7 +37,8 @@ const patientSchema=new mongoose.Schema({
     },
     reports:{
         type:[String],
-    }
+    },
+  
 
 
 },{timestamps:true});

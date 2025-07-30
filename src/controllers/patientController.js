@@ -83,7 +83,7 @@ const getPatientProfile = async (req, res) => {
       return res.status(400).json({ message: 'Invalid patient ID' });
     }
     // Populate userId to get firstName, lastName, and email from User
-    let patient = await Patient.findById(patientId).populate('userId', 'firstName lastName email');
+    let patient = await Patient.findById(patientId).populate('userId', 'firstName lastName email profilePicture');
     if (!patient) {
       const user = await User.findById(patientId);
       if (!user) {

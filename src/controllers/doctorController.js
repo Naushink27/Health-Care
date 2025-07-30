@@ -10,8 +10,8 @@ const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 const updateDoctorProfile = async (req, res) => {
   try {
     const doctorId = req.params.doctorId;
-    const { age, specialization, experience, qualification, contactNumber, address, about, profilePicture, hospitalName } = req.body;
-    
+    const { age, specialization, experience, qualification, contactNumber, address, about, profilePicture, hospitalName, firstName, lastName } = req.body;
+
     if (!isValidObjectId(doctorId)) {
       return res.status(400).json({ message: 'Invalid doctor ID' });
     }
@@ -29,19 +29,22 @@ const updateDoctorProfile = async (req, res) => {
     if (contactNumber && !/^\d{10}$/.test(contactNumber)) {
       return res.status(400).json({ message: 'Contact number must be 10 digits' });
     }
-    if (profilePicture && !/^https?:\/\/.+/.test(profilePicture)) {
-      return res.status(400).json({ message: 'Profile picture must be a valid URL' });
+    if (profilePicture && !/^https?:\/\/.+\.(jpg|jpeg|png|gif)$/i.test(profilePicture)) {
+      return res.status(400).json({ message: 'Profile picture must be a valid image URL (jpg, jpeg, png, or gif)' });
     }
 
     let doctor = await Doctor.findOne({ userId: doctorId });
 
     const user = await User.findById(doctorId);
-  user.profilePicture=profilePicture
-  await user.save()
-     console.log(user);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
+
+    // Update User model fields if provided
+    user.profilePicture = profilePicture !== undefined ? profilePicture : user.profilePicture;
+    if (firstName) user.firstName = firstName;
+    if (lastName) user.lastName = lastName;
+    await user.save();
 
     // If no doctor profile exists, create one
     if (!doctor) {
@@ -77,7 +80,9 @@ const updateDoctorProfile = async (req, res) => {
     }
 
     await doctor.save();
-    res.status(200).json({ message: 'Doctor profile updated successfully', doctor });
+    // Populate userId in response
+    const updatedDoctor = await Doctor.findOne({ userId: doctorId }).populate('userId', 'firstName lastName email profilePicture');
+    res.status(200).json({ message: 'Doctor profile updated successfully', doctor: updatedDoctor });
   } catch (error) {
     res.status(500).json({ message: error.message || 'Failed to update profile' });
   }
