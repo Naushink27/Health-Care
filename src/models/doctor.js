@@ -16,6 +16,7 @@ const doctorSchema = new mongoose.Schema({
     contactNumber: { type: String },
     address: { type: String },
     about: { type: String },
+    
 
     hospitalName: { type: String },
 }, { timestamps: true });

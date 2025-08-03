@@ -10,13 +10,18 @@ const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 const updateDoctorProfile = async (req, res) => {
   try {
     const doctorId = req.params.doctorId;
-    const { age, specialization, experience, qualification, contactNumber, address, about, profilePicture, hospitalName, firstName, lastName } = req.body;
+    const { firstName, lastName, age, specialization, experience, qualification, contactNumber, address, about, profilePicture, hospitalName } = req.body;
+
+    console.log('Request body:', req.body); // Log incoming data
 
     if (!isValidObjectId(doctorId)) {
       return res.status(400).json({ message: 'Invalid doctor ID' });
     }
 
     // Validation for required fields
+    if (!firstName || !lastName) {
+      return res.status(400).json({ message: 'First name and last name are required' });
+    }
     if (!specialization || !qualification) {
       return res.status(400).json({ message: 'Specialization and qualification are required' });
     }
@@ -29,24 +34,25 @@ const updateDoctorProfile = async (req, res) => {
     if (contactNumber && !/^\d{10}$/.test(contactNumber)) {
       return res.status(400).json({ message: 'Contact number must be 10 digits' });
     }
-    if (profilePicture && !/^https?:\/\/.+\.(jpg|jpeg|png|gif)$/i.test(profilePicture)) {
+    if (profilePicture && !/^https?:\/\/.+\.(jpg|jpeg|png|gif|webp)$/i.test(profilePicture)) {
       return res.status(400).json({ message: 'Profile picture must be a valid image URL (jpg, jpeg, png, or gif)' });
     }
 
-    let doctor = await Doctor.findOne({ userId: doctorId });
-
+    // Update User model
     const user = await User.findById(doctorId);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
+    console.log('User found:', { email: user.email, profilePicture: user.profilePicture });
 
-    // Update User model fields if provided
+    user.firstName = firstName || user.firstName;
+    user.lastName = lastName || user.lastName;
     user.profilePicture = profilePicture !== undefined ? profilePicture : user.profilePicture;
-    if (firstName) user.firstName = firstName;
-    if (lastName) user.lastName = lastName;
     await user.save();
+    console.log('User after save:', { email: user.email, profilePicture: user.profilePicture });
 
-    // If no doctor profile exists, create one
+    // Update or create Doctor profile
+    let doctor = await Doctor.findOne({ userId: doctorId });
     if (!doctor) {
       doctor = new Doctor({
         userId: doctorId,
@@ -60,11 +66,10 @@ const updateDoctorProfile = async (req, res) => {
         contactNumber,
         address,
         about,
-        profilePicture,
         hospitalName,
+        profilePicture:user.profilePicture,
       });
     } else {
-      // Update existing doctor profile
       doctor.age = age !== undefined ? age : doctor.age;
       doctor.specialization = specialization || doctor.specialization;
       doctor.experience = experience !== undefined ? experience : doctor.experience;
@@ -72,18 +77,23 @@ const updateDoctorProfile = async (req, res) => {
       doctor.contactNumber = contactNumber !== undefined ? contactNumber : doctor.contactNumber;
       doctor.address = address !== undefined ? address : doctor.address;
       doctor.about = about !== undefined ? about : doctor.about;
-      doctor.profilePicture = profilePicture !== undefined ? profilePicture : doctor.profilePicture;
       doctor.hospitalName = hospitalName !== undefined ? hospitalName : doctor.hospitalName;
       doctor.firstName = user.firstName;
       doctor.lastName = user.lastName;
       doctor.email = user.email;
+doctor.profilePicture = profilePicture !== undefined ? profilePicture : user.profilePicture || doctor.profilePicture;
     }
-
+console.log(doctor.profilePicture)
+    console.log('Doctor profile before save:', doctor);
     await doctor.save();
+
     // Populate userId in response
     const updatedDoctor = await Doctor.findOne({ userId: doctorId }).populate('userId', 'firstName lastName email profilePicture');
+    console.log('Response doctor:', updatedDoctor);
+    
     res.status(200).json({ message: 'Doctor profile updated successfully', doctor: updatedDoctor });
   } catch (error) {
+    console.error('Update error:', error);
     res.status(500).json({ message: error.message || 'Failed to update profile' });
   }
 };
@@ -91,23 +101,31 @@ const updateDoctorProfile = async (req, res) => {
 const getDoctorProfile = async (req, res) => {
   try {
     const doctorId = req.params.doctorId;
-    
     if (!isValidObjectId(doctorId)) {
       return res.status(400).json({ message: 'Invalid doctor ID' });
     }
-    let doctor=await Doctor.findById(doctorId)
-    if(!doctor){
-       doctor= await Doctor.findOne({ userId: doctorId })
-    }
+
+    let doctor = await Doctor.findById(doctorId).populate('userId', 'firstName lastName email profilePicture');
     if (!doctor) {
-      return res.status(404).json({ message: 'Doctor not found' });}
+      const user = await User.findById(doctorId);
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
 
-    // Populate userId to get firstName, lastName, and email from User
-    console.log("Doctor fetched:", doctor);
-    
+      doctor = new Doctor({
+        userId: doctorId,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+      });
+      await doctor.save();
+      doctor = await Doctor.findOne({ userId: doctorId }).populate('userId', 'firstName lastName email profilePicture');
+    }
 
+    console.log('Doctor fetched:', doctor);
     res.status(200).json({ message: 'Doctor profile fetched successfully', doctor });
   } catch (error) {
+    console.error('Fetch error:', error);
     res.status(500).json({ message: error.message || 'Failed to fetch profile' });
   }
 };
@@ -119,19 +137,22 @@ const checkAppointments = async (req, res) => {
       return res.status(400).json({ message: 'Invalid doctor ID' });
     }
 
-    // Find doctor to get _id for appointments
     const doctor = await Doctor.findOne({ userId: doctorId });
     if (!doctor) {
       return res.status(404).json({ message: 'Doctor not found' });
     }
-console.log(doctor._id);
-    const appointments = await Appointment.find({ doctorId: doctor._id });
+    console.log('Doctor _id:', doctor._id);
+
+    const appointments = await Appointment.find({ doctorId: doctor._id })
+      .populate('patientId', 'firstName lastName profilePicture')
+      .populate('doctorId', 'firstName lastName profilePicture');
     if (appointments.length === 0) {
       return res.status(404).json({ message: 'No appointments found' });
     }
     res.status(200).json({ message: 'Appointments fetched successfully', appointments });
-  } catch (err) {
-    res.status(500).json({ message: err.message || 'Failed to fetch appointments' });
+  } catch (error) {
+    console.error('Error fetching appointments:', error);
+    res.status(500).json({ message: error.message || 'Failed to fetch appointments' });
   }
 };
 
@@ -157,30 +178,33 @@ const updateAppointmentStatus = async (req, res) => {
     appointment.status = status;
     await appointment.save();
     res.status(200).json({ message: 'Appointment status updated successfully', appointment });
-  } catch (err) {
-    res.status(500).json({ message: err.message || 'Failed to update appointment status' });
+  } catch (error) {
+    console.error('Error updating appointment status:', error);
+    res.status(500).json({ message: error.message || 'Failed to update appointment status' });
   }
 };
-const getFeedback=async(req,res)=>{
-  try{
-    const doctorId=req.params.doctorId;
-    console.log("Doctor ID:", doctorId);
+
+const getFeedback = async (req, res) => {
+  try {
+    const doctorId = req.params.doctorId;
+    console.log('Doctor ID:', doctorId);
     if (!isValidObjectId(doctorId)) {
       return res.status(400).json({ message: 'Invalid doctor ID' });
     }
     const doctor = await Doctor.findOne({ userId: doctorId });
-    console.log("Doctor found:", doctor);
+    console.log('Doctor found:', doctor);
     if (!doctor) {
       return res.status(404).json({ message: 'Doctor not found' });
     }
-    const feedbacks=await Feedback.find({ doctorId: doctorId })
+    const feedbacks = await Feedback.find({ doctorId: doctorId })
       .populate('patientId', 'firstName lastName profilePicture')
       .populate('doctorId', 'firstName lastName profilePicture');
-    console.log("Feedbacks found:", feedbacks);
+    console.log('Feedbacks found:', feedbacks);
     res.status(200).json({ message: 'Feedback fetched successfully', feedbacks });
-  }catch(err){
-    res.status(500).json({ message: err.message || 'Failed to fetch feedback' });
+  } catch (error) {
+    console.error('Error fetching feedback:', error);
+    res.status(500).json({ message: error.message || 'Failed to fetch feedback' });
   }
-}
+};
 
-module.exports = { updateDoctorProfile, getDoctorProfile, checkAppointments, updateAppointmentStatus ,getFeedback};
+module.exports = { updateDoctorProfile, getDoctorProfile, checkAppointments, updateAppointmentStatus, getFeedback };
