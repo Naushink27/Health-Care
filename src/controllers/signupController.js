@@ -37,7 +37,7 @@ const signupUser = async (req, res) => {
             const user = new User({
                 firstName,
                 lastName,
-                email,
+                email:email.toLowerCase(),
                 password: hashedPassword,
                 role: userRole,
             });
@@ -49,7 +49,7 @@ const signupUser = async (req, res) => {
                     userId: user._id,
                     firstName,
                     lastName,
-                    email,
+                    email: email.toLowerCase(),
                 });
                 await patient.save({ session });
             } else if (userRole === 'doctor') {
@@ -57,7 +57,7 @@ const signupUser = async (req, res) => {
                     userId: user._id,
                     firstName,
                     lastName,
-                    email,
+                    email: email.toLowerCase(),
                 });
                 await doctor.save({ session });
             } else {

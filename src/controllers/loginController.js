@@ -7,12 +7,14 @@ const loginUser = async (req, res) => {
         }
 
         const { email, password } = req.body;
+        const newEmail = email.toLowerCase();
+        console.log('Login attempt with email:', newEmail);
 
-        if (!email || !password) {
+        if (!newEmail || !password) {
             return res.status(400).json({ message: 'Email and password are required' });
         }
 
-        const user = await User.findOne({ email });
+        const user = await User.findOne({ email:newEmail });
         if (!user) {
             return res.status(400).json({ message: 'Invalid email' });
         }
