@@ -1,6 +1,6 @@
 const signupValidation = require('../validations/signupValidation');
 const User = require('../models/user');
-const Patient = require('../models/Patient');
+const Patient = require('../models/patient');
 const Doctor = require('../models/Doctor');
 const bcrypt = require('bcrypt');
 

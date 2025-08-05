@@ -1,5 +1,5 @@
 const Appointment = require('../models/appointment');
-const Doctor = require('../models/Doctor');
+const Doctor = require('../models/doctor');
 const Patient = require('../models/patient');
 const getAllPatients=async(req,res)=>{
     try{

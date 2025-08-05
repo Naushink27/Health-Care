@@ -13,7 +13,7 @@ const doctorRouter = require('./src/routes/doctor');
 const adminRouter = require('./src/routes/admin');
 const connectDB = require('./src/config/database');
 const Message = require('./src/models/Message');
-const Appointment = require('./src/models/Appointment');
+const Appointment = require('./src/models/appointment');
 
 const app = express();
 app.use(cors({
