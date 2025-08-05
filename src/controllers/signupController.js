@@ -1,7 +1,7 @@
 const signupValidation = require('../validations/signupValidation');
 const User = require('../models/user');
 const Patient = require('../models/patient');
-const Doctor = require('../models/Doctor');
+const Doctor = require('../models/doctor');
 const bcrypt = require('bcrypt');
 
 const signupUser = async (req, res) => {
