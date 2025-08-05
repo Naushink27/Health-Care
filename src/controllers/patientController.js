@@ -1,7 +1,7 @@
 const Patient = require('../models/patient');
 const Doctor = require('../models/doctor');
 const Appointment = require('../models/appointment');
-const User = require('../models/User');
+const User = require('../models/user');
 const mongoose = require('mongoose');
 const Feedback = require('../models/feedback');
 
