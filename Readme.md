@@ -69,16 +69,7 @@
 }
 ```
 
-#### **Chat Message**
-```js
-{
-  _id,
-  roomId,
-  senderId,
-  receiverId,
-  text
-}
-```
+
 
 ---
 
@@ -93,13 +84,13 @@
 - `PUT /patient/profile`
 - `GET /patient/appointments`
 - `POST /patient/appointments/book`
+- `POST /patient/feedback`
 
 ### Doctor:
 - `GET /doctor/profile`
 - `PUT /doctor/profile`
 - `GET /doctor/appointments`
-- `POST /doctor/prescriptions`
+- `POST /doctor/appointments/update`
+- `GET /doctor/feedbacks`
 
-### Admin:
-- `GET /admin/users`
-- `GET /admin/analytics`
+
