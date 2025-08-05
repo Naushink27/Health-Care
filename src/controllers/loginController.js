@@ -29,7 +29,12 @@ const loginUser = async (req, res) => {
             return res.status(400).json({ message: 'Token generation failed' });
         }
 
-        res.cookie('jwt', token);
+        res.cookie('jwt', token,{
+             httpOnly: true,
+  secure: true, // important for HTTPS
+  sameSite: 'None',
+  maxAge: 7 * 24 * 60 * 60 * 1000 
+        });
         res.status(200).json({ message: 'Login successful', user });
 
     } catch (error) {

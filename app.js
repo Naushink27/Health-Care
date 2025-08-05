@@ -16,11 +16,13 @@ const app = express();
 
 // Middleware
 app.use(cors({
-  origin: 'https://healthcare-frontend-lake.vercel.app',  
+  origin: 'https://healthcare-frontend-lake.vercel.app',
   credentials: true,
-   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],            
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  optionsSuccessStatus: 200
 }));
+
 app.use(express.json());
 app.use(cookieParser());
 
